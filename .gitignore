@@ -1,0 +1,5 @@
+settings.py
+.idea
+__pycache__
+data
+parsed_data
