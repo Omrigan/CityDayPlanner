@@ -3,3 +3,6 @@ settings.py
 __pycache__
 data
 parsed_data
+mos_data
+osm-files
+.ipynb_checkpoints/

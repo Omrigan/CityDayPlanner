@@ -1,14 +1,8 @@
-import json
-
 from lib import *
 
 import requests
 
 from settings import GMAPS_TOKEN
-
-
-
-
 
 # gmaps = googlemaps.Client(key=GMAPS_TOKEN)
 
