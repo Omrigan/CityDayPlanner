@@ -29,7 +29,7 @@ def squash_distances(matrix1, matrix2):
 
 
 DATABASE_FILES = [
-    "data/small.json",
+    "data/google-small.json",
     "data/mos-markets.json",
     "data/mos-parks.json",
 ]
