@@ -42,27 +42,38 @@ for file in DATABASE_FILES:
     data = json.load(open(file))
     for key, value in data.items():
         database[key].extend(value)
+
+
 # print(database['cafe'])
 # print(database['park'])
 
-def get_canidates(event):
-    type = event.get('type')
-    if type == 'fixed_place':
-        return [event]
-    brand = event.get('brand')
-    result = []
-    for data in database[type]:
-        conds = [True]
-        if brand is not None:
-            conds.append(data.get('brand') == brand)
-        if all(conds):
-            result.append(data)
-    if len(result)==0:
-        raise Exception("No places with this type %s" % event)
-    return result[:100]
-
 
 class PredictJob():
+
+    def get_free_time(self, duration, start_time):
+        return {'type': 'free_time',
+                'delay': duration,
+                'start_time': start_time,
+                'finish_time': start_time + duration}
+
+    def normalize_dates(self, event):
+        if 'start_time' in event:
+            event['start_time'] = self.ptime(event['start_time'])
+
+        if 'finish_time' in event:
+            event['finish_time'] = self.ptime(event['finish_time'])
+
+        if 'delay' in event:
+            event['delay'] = self.pdelay(event['delay'])
+        else:
+            event['delay'] = timedelta(minutes=0)
+        if 'start_time' in event and 'finish_time' in event:
+            event['delay'] = event['finish_time'] - event['start_time']
+        elif 'start_time' in event:
+            event['finish_time'] = event['start_time'] + event['delay']
+        elif 'finish_time' in event:
+            event['start_time'] = event['finish_time'] - event['delay']
+        return event
 
     def __init__(self, ordered_events, unordered_events):
         self.ordered_events = ordered_events
@@ -70,19 +81,40 @@ class PredictJob():
         self.route = [{'event': x} for x in self.ordered_events]
         self.warnings = []
 
+    def get_canidates(self, event):
+        type = event.get('type')
+        if type == 'fixed_place':
+            return [event]
+        brand = event.get('brand')
+        result = []
+        for data in database[type]:
+            conds = [True]
+            if brand is not None:
+                conds.append(data.get('brand') == brand)
+            if all(conds):
+                result.append(data)
+        if len(result) == 0:
+            raise Exception("No places with this type %s" % event)
+        return result[:100]
+
     def predict(self):
         self.answers = []
-        self.stages = [get_canidates(self.ordered_events[0])]
+        self.stage_candidates = [self.get_canidates(self.ordered_events[0])]
         self.current_dists = None
         for event in self.ordered_events[1:]:
-            self.stages.append(get_canidates(event))
-            dists = calculate_distances(self.stages[-2], self.stages[-1])
+            self.stage_candidates.append(self.get_canidates(event))
+            dists = calculate_distances(self.stage_candidates[-2], self.stage_candidates[-1])
             if self.current_dists is not None:
                 self.current_dists, answer = squash_distances(self.current_dists, dists)
                 self.answers.append(answer)
             else:
                 self.current_dists = dists
         self.recover_route()
+
+    def preprocess_item(self, item, event):
+        item.update(event)
+        data = self.normalize_dates(item)
+        return data
 
     def recover_route(self):
         # print(self.answers)
@@ -100,37 +132,64 @@ class PredictJob():
         rev_route.append(start)
 
         for (i, point_id) in enumerate(reversed(rev_route)):
-            self.route[i]['place'] = self.stages[i][point_id]
+            self.route[i] = self.preprocess_item(self.stage_candidates[i][point_id], self.ordered_events[i])
+        self.enrich_route()
 
     def ptime(self, st):
         return datetime.strptime(st, "%H:%M")
 
     def ftime(self, dt):
-        return dt.strftim("%H:%M")
+        return dt.strftime("%H:%M")
 
-    def pdelay(self, mins):
-        return timedelta(minutes=mins)
+    @staticmethod
+    def pdelay(mins):
+        return timedelta(minutes=int(mins or 0))
 
-    def get_time(self, idx1, idx2):
+    @staticmethod
+    def fdelay(delay):
+        return delay.seconds / 60
+
+    @staticmethod
+    def get_time(idx1, idx2):
         return timedelta(minutes=40)
 
     def enrich_route(self):
-        current_time = self.route[0]['event'].get('finish_time')
-        if current_time:
-            current_time = self.ptime(current_time)
-        else:
+        current_time = self.route[0].get('finish_time')
+        if not current_time:
             self.warnings.append("Starttime was not specified!")
             current_time = datetime.now()
+        new_route = []
         for i in range(1, len(self.route)):
+
             current_time += self.get_time(i - 1, i)
             cur_item = self.route[i]
-            cur_item['start_time'] = current_time
-            if cur_item['event'].get('delay'):  # FIXME
-                current_time += self.pdelay(cur_item['event'].get('delay'))
-            cur_item['finish_time'] = current_time
+            print(cur_item)
+            if cur_item.get('start_time'):
+                if current_time < cur_item['start_time']:
+                    new_route.append(self.get_free_time(cur_item['start_time'] -
+                                                        current_time, current_time))
+                elif current_time > cur_item['start_time']:
+                    self.warnings.append("For place '%s' you will late %s miuntes" % (
+                        cur_item['name'],
+                        (cur_item['start_time'] - current_time).minutes
+                    ))
+            else:
+                cur_item['start_time'] = current_time
+            current_time += cur_item.get('delay')
+            if 'finish_time' not in cur_item:
+                cur_item['finish_time'] = current_time
+            new_route.append(cur_item)
+        self.route = new_route
+
+    def describe_place(self, item):
+        print(item)
+        item['start_time'] = self.ftime(item['start_time'])
+        item['finish_time'] = self.ftime(item['finish_time'])
+        item['delay'] = item['delay'].seconds / 60
+        return item
 
     def describe(self):
         return {
-            "route": self.route,
+            "route": [self.describe_place(place) for place in self.route],
             "resulting_dist": self.resulting_distance
         }
