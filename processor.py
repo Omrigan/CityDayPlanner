@@ -131,23 +131,26 @@ elif args.provider == 'osm':
     }
     e = et.parse(args.fr).getroot()
     for n in e.iter('node'):
-        loc = {'lat': n.attrib['lat'], 'lon': n.attrib['lon']}
+        loc = {'lat': n.attrib['lat'], 'lng': n.attrib['lon']}
         tags = {}
         for tag in n:
             tags[tag.attrib['k']] = tag.attrib['v']
 
         if 'name' in tags:
             # print(tags)
-
-            place_ready = {
-                "name": tags["name"],
+            place_ready = dict(tags)
+            place_ready.update({
                 "location": loc,
                 "brand": get_brand(tags["name"])
-            }
-            place_ready.update(tags)
+            })
+            if 'brand' in tags:
+                place_ready["original_brand"] = tags['brand']
             added = False
             for predicate, cat in mapping.items():
+
                 if tags.get(predicate[0]) == predicate[1]:
+                    # if predicate[1] == 'cafe':
+                    #     print(place_ready)
                     categories[cat].append(place_ready)
                     added = True
             if not added:

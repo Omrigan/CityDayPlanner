@@ -1,15 +1,17 @@
 from unittest import TestCase
 from requests import post
 
+from lib import pretty_json
+
 URI = "http://127.0.0.1:5000/predict"
 sample_request = {
             "ordered_events": [
                 {"type": "fixed_place",
                  "location": {'lat': 55.7494539, 'lng': 37.62160470000001, },
                  "finish_time": "15:00"},
-                # {"type": "coffee",
-                #  "brand": "Dablbi",
-                #  "delay": 15},
+                {"type": "cafe",
+                 "brand": "даблби",
+                 "delay": 15},
                 {"type": "park",
                  "delay": "free"},
                 {"type": "restaurant",
@@ -26,4 +28,4 @@ class TC(TestCase):
 
         resp = post(URI, json=sample_request)
         print(resp)
-        print(resp.json())
+        print(pretty_json(resp.json()))
