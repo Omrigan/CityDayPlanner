@@ -4,6 +4,7 @@
 
 Презентация: [CityDayPlanner.pdf](https://omrigan.github.io/CityDayPlanner/CItyDayPlanner.pdf)
 
+Полезная ссылка: [https://calendar.google.com/calendar/r](https://calendar.google.com/calendar/r)
 
 
 ## Пример API
