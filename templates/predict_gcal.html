@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CityDayPlanner</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+
+<body>
+
+<div class="container" style="font-size: 16pt">
+    <h1>CityDayPlanner</h1>
+    <h2>О сервисе</h2>
+
+    Планировщик перемещений в городе. Оптимизирует логичстику персональных перемещений.
+
+    <br> <br>
+    <h3>Сценарии использования</h3>
+     - "Еду по делам в другую часть города, хочу пообедать в месте из знакомой сети" <br>
+     - Прогулка на выходных <br>
+     - Ежедневные перемещения (дом -> работа -> работа -> ужин -> дом) <br>
+     - Достопримечательности в незнакомом городе <br>
+
+    <br> <br>
+
+    <h3>Техническое устройство</h3>
+    1. Данные из трех источников: <br>
+     - Google Maps <br>
+     - OpenStreetMap <br>
+     - Открытые данные правительства Москвы <br>
+    2. Бэкенд на Python <br>
+    3. Оптимзация сумарного времени перемещения при помощи динамического программирования <br>
+    4. Собственный интсанс OpenStreetMapRouter для матриц расстояний <br>
+    5. Интеграция с Google Calendar <br>
+    6. Поддержка фильтрации мест по полям и брендам <br>
+    <br><br><br><br><br><br><br><br><br><br>
+
+</div>
+<div class="container">
+    <h1>План на день</h1>
+    {% for item in params.route %}
+        {% if item.type == 'free_time' %}
+
+            <div class="alert alert-secondary" role="alert">
+                <h3>Свободное время</h3>
+                Время: {{ item.start_time }} - {{ item.finish_time }}
+            </div>
+        {% elif item.type == 'move' %}
+            <div class="alert alert-primary" role="alert">
+                <h3>В дороге</h3>
+                Время: {{ item.start_time }} - {{ item.finish_time }}
+            </div>
+
+        {% else %}
+
+            <div class="alert alert-success" role="alert">
+
+
+                <div class="row">
+
+                    <div class="col-md-6">
+                        <h3>{{ item.name }}</h3>
+                        Время: {{ item.start_time }} - {{ item.finish_time }} <br>
+                        Тип: {{ item.type }} <br>
+                    </div>
+                    <div class="col-md-6">
+                        {% if item.location %}
+                            <h5>Место</h5>
+                            <iframe width="200" height="150" frameborder="0" style="border:0"
+                                    src="https://www.google.com/maps/embed/v1/place?q={{ item.location.lat }}%2C{{ item.location.lng }}&key=AIzaSyD8ua7sxMOcAs9kypTcMWUc8guvI3TmuyQ"
+                                    allowfullscreen></iframe>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    {#    <iframe width="600" height="450" frameborder="0" style="border:0"#}
+    {#            src="https://www.google.com/maps/embed/v1/directions?origin=52.123%2C123.2&destination=place_id:ChIJL2vDV9lDTUARLRFsrz4y9aQ&key=AIzaSyD8ua7sxMOcAs9kypTcMWUc8guvI3TmuyQ"#}
+    {#            allowfullscreen></iframe>#}
+
+</div>
+
+<h3>Debug </h3>
+{{ params.route }}
+{#            {{ item.location.lat }}%2C{{ item.location.lng }}#}
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+</body>
+</html>

@@ -1,9 +1,12 @@
-import json
 from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime, timedelta
 
 import geopy.distance
 import numpy as np
+
+import osm_connector
+from lib import *
 
 
 def dist(x, y):
@@ -14,14 +17,18 @@ fake = True
 
 
 def calculate_distances(src_list, target_list):
-    print(src_list[:5], target_list[:5])
-    print("Dists", len(src_list), len(target_list))
-    result = [[dist(s['location'], t['location']) for t in target_list] for s in src_list]
+    # print(DISTS, len(src_list), len(target_list))
+
+    if DISTS == 'dummy':
+        result = [[dist(s['location'], t['location']) for t in target_list] for s in src_list]
+    elif DISTS == 'osm':
+        result = osm_connector.calcualte_distances("car", src_list, target_list)
+
     return np.asarray(result)
 
 
 def squash_distances(matrix1, matrix2):
-    print("Squashing", matrix1.shape, matrix2.shape)
+    # print("Squashing", matrix1.shape, matrix2.shape)
     dists = np.zeros((matrix1.shape[0], matrix2.shape[1]), dtype=float)
     answers = np.zeros((matrix1.shape[0], matrix2.shape[1]), dtype=int)
     for i in range(dists.shape[0]):
@@ -57,24 +64,25 @@ class PredictJob():
                 'start_time': start_time,
                 'finish_time': start_time + duration}
 
-    def normalize_dates(self, event):
-        if 'start_time' in event:
-            event['start_time'] = self.ptime(event['start_time'])
+    def normalize_dates(self, place):
 
-        if 'finish_time' in event:
-            event['finish_time'] = self.ptime(event['finish_time'])
+        if 'start_time' in place:
+            place['start_time'] = self.ptime(place['start_time'])
 
-        if 'delay' in event:
-            event['delay'] = self.pdelay(event['delay'])
+        if 'finish_time' in place:
+            place['finish_time'] = self.ptime(place['finish_time'])
+
+        if 'delay' in place:
+            place['delay'] = self.pdelay(place['delay'])
         else:
-            event['delay'] = timedelta(minutes=0)
-        if 'start_time' in event and 'finish_time' in event:
-            event['delay'] = event['finish_time'] - event['start_time']
-        elif 'start_time' in event:
-            event['finish_time'] = event['start_time'] + event['delay']
-        elif 'finish_time' in event:
-            event['start_time'] = event['finish_time'] - event['delay']
-        return event
+            place['delay'] = timedelta(minutes=0)
+        if 'start_time' in place and 'finish_time' in place:
+            place['delay'] = place['finish_time'] - place['start_time']
+        elif 'start_time' in place:
+            place['finish_time'] = place['start_time'] + place['delay']
+        elif 'finish_time' in place:
+            place['start_time'] = place['finish_time'] - place['delay']
+        return place
 
     def __init__(self, ordered_events, unordered_events):
         self.ordered_events = ordered_events
@@ -96,15 +104,17 @@ class PredictJob():
                 result.append(data)
         if len(result) == 0:
             raise Exception("No places with this type %s" % event)
-        return result[:100]
+        return deepcopy(result[:CLIPPING])
 
     def predict(self):
         self.answers = []
+        self.all_dists = []
         self.stage_candidates = [self.get_canidates(self.ordered_events[0])]
         self.current_dists = None
         for event in self.ordered_events[1:]:
             self.stage_candidates.append(self.get_canidates(event))
             dists = calculate_distances(self.stage_candidates[-2], self.stage_candidates[-1])
+            self.all_dists.append(dists)
             if self.current_dists is not None:
                 self.current_dists, answer = squash_distances(self.current_dists, dists)
                 self.answers.append(answer)
@@ -127,19 +137,27 @@ class PredictJob():
         self.resulting_distance = np.min(self.current_dists)
         rev_route = [end]
         current_point = end
-        for answer in reversed(self.answers):
+        rev_dists = []
+        for dists, answer in reversed(list(zip(self.all_dists[1:], self.answers))):
+            next_point = current_point
             current_point = answer[start, current_point]
             rev_route.append(current_point)
+            rev_dists.append(dists[current_point, next_point])
         rev_route.append(start)
-
+        rev_dists.append(float(self.all_dists[-1][start, current_point]))
+        self.route_dists = list(reversed(rev_dists))
+        # print("Dists", self.route_dists)
         for (i, point_id) in enumerate(reversed(rev_route)):
             self.route[i] = self.preprocess_item(self.stage_candidates[i][point_id], self.ordered_events[i])
         self.enrich_route()
 
     def ptime(self, st):
+
         return datetime.strptime(st, "%H:%M")
 
     def ftime(self, dt):
+        if type(dt) == str:
+            return dt
         return dt.strftime("%H:%M")
 
     @staticmethod
@@ -150,21 +168,34 @@ class PredictJob():
     def fdelay(delay):
         return delay.seconds / 60
 
-    @staticmethod
-    def get_time(idx1, idx2):
-        return timedelta(minutes=40)
+    def get_time(self, start_idx):
+        if DISTS == 'dummy1':
+            return timedelta(minutes=40)
+        else:
+            # print(self.route_dists[start_idx])
+            return timedelta(minutes=self.route_dists[start_idx])
+
+    def get_move(self, ind, cuurent_time):
+        delay = self.get_time(ind - 1)
+
+        return {'location_from': self.route[ind - 1]['location'],
+                'location_to': self.route[ind]['location'],
+                'start_time': cuurent_time,
+                'finish_time': cuurent_time + delay,
+                'type': 'move',
+                'delay': delay}
 
     def enrich_route(self):
         current_time = self.route[0].get('finish_time')
         if not current_time:
             self.warnings.append("Starttime was not specified!")
             current_time = datetime.now()
-        new_route = []
+        new_route = [self.route[0]]
         for i in range(1, len(self.route)):
-
-            current_time += self.get_time(i - 1, i)
+            new_route.append(self.get_move(i, current_time))
+            current_time += new_route[-1]['delay']
             cur_item = self.route[i]
-            print(cur_item)
+            # print(cur_item)
             if cur_item.get('start_time'):
                 if current_time < cur_item['start_time']:
                     new_route.append(self.get_free_time(cur_item['start_time'] -
@@ -172,7 +203,7 @@ class PredictJob():
                 elif current_time > cur_item['start_time']:
                     self.warnings.append("For place '%s' you will late %s miuntes" % (
                         cur_item['name'],
-                        (cur_item['start_time'] - current_time).minutes
+                        ((cur_item['start_time'] - current_time).seconds / 60) % 1440
                     ))
             else:
                 cur_item['start_time'] = current_time
@@ -183,14 +214,18 @@ class PredictJob():
         self.route = new_route
 
     def describe_place(self, item):
-        print(item)
+        # print(item)
+
+        item = deepcopy(item)
         item['start_time'] = self.ftime(item['start_time'])
         item['finish_time'] = self.ftime(item['finish_time'])
         item['delay'] = item['delay'].seconds / 60
         return item
 
     def describe(self):
+
         return {
             "route": [self.describe_place(place) for place in self.route],
-            "resulting_dist": self.resulting_distance
+            "resulting_dist": self.resulting_distance,
+            "warnings": self.warnings
         }

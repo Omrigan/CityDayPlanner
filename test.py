@@ -27,11 +27,12 @@ class TC(TestCase):
     def test(self):
 
         resp = post(URI, json=sample_request)
-        print(resp)
-        print(pretty_json(resp.json()))
+        #print(resp)
+        #print(pretty_json(resp.json()))
 
     def test_params(self):
+        pass
         resp = get("http://127.0.0.1:5000/get_params")
-        print(resp.json())
+        #print(resp.json())
 
 
