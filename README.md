@@ -1,6 +1,6 @@
 # CityDayPlanner
 
-Сервер запущен на: http://23.105.248.30/
+Сервер запущен на: [http://23.105.248.30/](http://23.105.248.30/)
 
 Презентация: [CityDayPlanner.pdf](https://omrigan.github.io/CityDayPlanner/CItyDayPlanner.pdf)
 
