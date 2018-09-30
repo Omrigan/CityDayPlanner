@@ -1,5 +1,5 @@
 from unittest import TestCase
-from requests import post
+from requests import post, get
 
 from lib import pretty_json
 
@@ -29,3 +29,9 @@ class TC(TestCase):
         resp = post(URI, json=sample_request)
         print(resp)
         print(pretty_json(resp.json()))
+
+    def test_params(self):
+        resp = get("http://127.0.0.1:5000/get_params")
+        print(resp.json())
+
+

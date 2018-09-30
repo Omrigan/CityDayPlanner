@@ -1,7 +1,9 @@
+import json
+
 from flask import Flask
 from flask import request, jsonify
 
-from logic import PredictJob
+from logic import PredictJob, database
 
 app = Flask(__name__)
 
@@ -15,3 +17,26 @@ def predict():
     job = PredictJob(ordered_events, unordered_events)
     job.predict()
     return jsonify(job.describe())
+
+
+@app.route('/get_params', methods=["GET"])
+def get_params():
+    additional = json.load(open('data/additional.json'))
+    brands = json.load(open('data/brands.json'))
+    filtered_brands = {}
+    for type in brands:
+        for value, cnt in brands[type].items():
+            if cnt > 1:
+                if type not in filtered_brands:
+                    filtered_brands[type] = [value]
+                else:
+                    filtered_brands[type].append(value)
+    for type in filtered_brands:
+        filtered_brands[type] = sorted(filtered_brands[type],
+                                       key=lambda x: brands[type][x], reverse=True)
+    del filtered_brands['other']
+    return jsonify({
+        "options": additional,
+        "brands": filtered_brands,
+        "types": list(database.keys())
+    })
