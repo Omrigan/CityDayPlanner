@@ -14,6 +14,7 @@ fake = True
 
 
 def calculate_distances(src_list, target_list):
+    print(src_list[:5], target_list[:5])
     print("Dists", len(src_list), len(target_list))
     result = [[dist(s['location'], t['location']) for t in target_list] for s in src_list]
     return np.asarray(result)
