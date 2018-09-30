@@ -2,7 +2,7 @@
 
 Сервер запущен на: [http://23.105.248.30/](http://23.105.248.30/)
 
-Презентация: [CityDayPlanner.pdf](https://omrigan.github.io/CityDayPlanner/CItyDayPlanner.pdf)
+Презентация: [CityDayPlanner.pdf](https://omrigan.github.io/CityDayPlanner/CityDayPlanner.pdf)
 
 Полезная ссылка: [https://calendar.google.com/calendar/r](https://calendar.google.com/calendar/r)
 
