@@ -1,5 +1,12 @@
-# Сервер работает на 23.105.248.30
-## API
+# CityDayPlanner
+
+Сервер запущен на: http://23.105.248.30/
+
+Презентация: [CityDayPlanner.pdf](CityDayPlanner.pdf)
+
+
+
+## Пример API
 Request:
 ```
 {
