@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  osrm:
+    container_name: osrm
+    image: osrm/osrm-backend
+    command: osrm-routed --algorithm mld /data/moscow.osrm
+    volumes:
+      - ./osrm:/data
+    ports:
+      - "500:5000"
+#  mongo:
+#    container_name: mongo
+#    image: mongo

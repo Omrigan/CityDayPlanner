@@ -2,7 +2,7 @@ import argparse
 import os
 from collections import defaultdict, Counter
 
-from lib import *
+from app.app import *
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 

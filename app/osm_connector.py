@@ -1,8 +1,8 @@
 # BASE_URL = 'http://router.project-osrm.org/table/v1'
-BASE_URL = 'http://23.105.248.30:5001/table/v1'
-import numpy as np
-import requests
 
+import numpy as np
+import requests, os
+BASE_URL = os.getenv('OSRM_URL')
 
 def calcualte_distances(profile, src, dist):
     coords_list = []

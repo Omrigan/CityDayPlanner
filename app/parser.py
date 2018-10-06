@@ -1,9 +1,8 @@
-from lib import *
-
 import requests
 
-from settings import GMAPS_TOKEN
-
+from lib import pretty_json, moscow_location
+import os
+GMAPS_TOKEN = os.getenv("GMAPS_MAIN_TOKEN")
 # gmaps = googlemaps.Client(key=GMAPS_TOKEN)
 
 def make_request(method, params):
@@ -21,9 +20,10 @@ def get_data_by_keyword(keyword):
     return places["results"]
 
 
-all_places = []
-for k in ["park", "restaurant"]:
-    all_places.extend(get_data_by_keyword(k))
+if __name__=="__main__":
+    all_places = []
+    for k in ["park", "restaurant"]:
+        all_places.extend(get_data_by_keyword(k))
 
-with open('parsed_data/small_raw.json', 'w') as f:
-    f.write(pretty_json(all_places))
+    with open('google_data/small_raw.json', 'w') as f:
+        f.write(pretty_json(all_places))

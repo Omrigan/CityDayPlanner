@@ -3,7 +3,8 @@ import json
 from flask import Flask, render_template
 from flask import request, jsonify
 
-from logic import PredictJob, database, pretty_json
+from logic import PredictJob, database
+from lib import pretty_json
 
 app = Flask(__name__)
 

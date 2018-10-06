@@ -1,8 +1,6 @@
 from unittest import TestCase
 from requests import post, get
 
-from lib import pretty_json
-
 URI = "http://127.0.0.1:5000/predict"
 sample_request = {
             "ordered_events": [

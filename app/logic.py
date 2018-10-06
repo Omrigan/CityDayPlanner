@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -6,14 +7,15 @@ import geopy.distance
 import numpy as np
 
 import osm_connector
-from lib import *
+import json
 
 
 def dist(x, y):
     return geopy.distance.vincenty((x['lat'], x['lng']), (y['lat'], y['lng'])).meters
 
 
-fake = True
+CLIPPING = int(os.getenv('CLIPPING'))
+DISTS = os.getenv('DISTS')
 
 
 def calculate_distances(src_list, target_list):
@@ -40,10 +42,10 @@ def squash_distances(matrix1, matrix2):
 
 
 DATABASE_FILES = [
-    "data/google-small.json",
-    "data/mos-markets.json",
-    "data/mos-parks.json",
-    "data/osm-all.json",
+    "../data/google-small.json",
+    "../data/mos-markets.json",
+    "../data/mos-parks.json",
+    "../data/osm-all.json",
 ]
 database = defaultdict(list)
 for file in DATABASE_FILES:

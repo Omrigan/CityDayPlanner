@@ -1,8 +1,8 @@
-settings.py
 .idea
 __pycache__
-data
-parsed_data
-mos_data
-osm-files
+data/
+osrm/
+deploy/dev/.env
+deploy/prod/.env
 .ipynb_checkpoints/
+token.json

@@ -7,8 +7,7 @@ from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
 
-from datetime import date, datetime, time
-import sys
+from datetime import datetime
 import dateutil.parser
 # if sys.version_info < (3, 7):
 #     from backports.datetime_fromisoformat import MonkeyPatch
@@ -22,10 +21,10 @@ def main():
     """Shows basic usage of the Google Calendar API.
     Prints the start and name of the next 10 events on the user's calendar.
     """
-    store = file.Storage('token.json')
+    store = file.Storage('../token.json')
     creds = store.get()
     if not creds or creds.invalid:
-        flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
+        flow = client.flow_from_clientsecrets('../data/credentials.json', SCOPES)
         creds = tools.run_flow(flow, store)
     service = build('calendar', 'v3', http=creds.authorize(Http()))
 
