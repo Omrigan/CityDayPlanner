@@ -6,10 +6,24 @@ services:
     image: osrm/osrm-backend
     command: osrm-routed --algorithm mld /data/moscow.osrm
     volumes:
-      - ../../osrm:/data
+      - ../../data/osrm:/data
     ports:
       - "5001:5000"
 
-#  mongo:
-#    container_name: mongo
-#    image: mongo
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - "27017:27017"
+
+  app:
+    container_name: app
+    build: ../../app
+    env_file:
+      - .env
+    volumes:
+      - ../../app:/app
+      - ../../data:/app/data
+    ports:
+      - "80:5000"
+

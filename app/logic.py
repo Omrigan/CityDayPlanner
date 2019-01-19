@@ -41,17 +41,17 @@ def squash_distances(matrix1, matrix2):
     return dists, answers
 
 
-DATABASE_FILES = [
-    "../data/google-small.json",
-    "../data/mos-markets.json",
-    "../data/mos-parks.json",
-    "../data/osm-all.json",
-]
+# DATABASE_FILES = [
+#     "../process/google-small.json",
+#     "../process/mos-markets.json",
+#     "../process/mos-parks.json",
+#     "../process/osm-all.json",
+# ]
 database = defaultdict(list)
-for file in DATABASE_FILES:
-    data = json.load(open(file))
-    for key, value in data.items():
-        database[key].extend(value)
+# for file in DATABASE_FILES:
+#     process = json.load(open(file))
+#     for key, value in process.items():
+#         database[key].extend(value)
 
 
 # print(database['cafe'])

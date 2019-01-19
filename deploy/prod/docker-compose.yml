@@ -4,9 +4,9 @@ services:
   osrm:
     container_name: osrm
     image: osrm/osrm-backend
-    command: osrm-routed --algorithm mld /data/moscow.osrm
+    command: osrm-routed --algorithm mld /process/moscow.osrm
     volumes:
-      - ./osrm:/data
+      - ./osrm:/process
     ports:
       - "500:5000"
 #  mongo:

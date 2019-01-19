@@ -22,8 +22,8 @@ def predict():
 
 @app.route('/get_params', methods=["GET"])
 def get_params():
-    additional = json.load(open('data/additional.json'))
-    brands = json.load(open('data/brands.json'))
+    additional = json.load(open('process/additional.json'))
+    brands = json.load(open('process/brands.json'))
     filtered_brands = {}
     for type in brands:
         for value, cnt in brands[type].items():
