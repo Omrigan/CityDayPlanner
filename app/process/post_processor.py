@@ -1,17 +1,37 @@
-for cat in additional_fields:
-    for option in additional_fields[cat]:
-        additional_fields[cat][option] = list(additional_fields[cat][option])
-with open(ADDITIONAL_PATH, 'w') as f:
-    f.write(pretty_json(additional_fields))
+import argparse
+import os
+from collections import defaultdict, Counter
+import re
+from lib import *
+import pymongo
+from process import connector
 
-ADDITIONAL_PATH = 'process/additional.json'
+from pymongo import MongoClient
 
-additional_fields = defaultdict(lambda: defaultdict(set))
+parser = argparse.ArgumentParser(description='tbd')
 
-if os.path.isfile(ADDITIONAL_PATH):
-    additional_fields_old = json.load(open(ADDITIONAL_PATH))
-    for cat in additional_fields_old:
-        for option in additional_fields_old[cat]:
-            additional_fields[cat][option] = set(additional_fields_old[cat][option])
+db = connector.get_db()
 
 
+def insert_all(cats):
+    collection = db.categories
+    collection.insert_many(cats)
+
+
+categories = defaultdict(lambda: {
+    "brands": [],
+    "additional_fields": defaultdict(list)
+})
+
+places = db.places
+
+for place in places.find():
+    for cat in place["categories"]:
+        categories[cat]["brands"].append(place['brand'])
+        for field_name, value in place["additional_fields"].items():
+            categories[cat]["additional_fields"][field_name].append(value)
+
+for cat, value in categories.items():
+    value["name"] = cat
+
+insert_all(categories.values())
